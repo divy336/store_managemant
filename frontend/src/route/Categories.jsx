@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/api";
 import { isAllowedName } from "../utils/validation";
 import Header from "../components/Hader";
 import Footer from "../components/Footer";
 function Categories() {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [search, setSearch]         = useState("");
   const [showModal, setShowModal]   = useState(false);
@@ -60,7 +62,14 @@ function Categories() {
   };
 
   const handleDelete = async (cid, cname) => {
-    if (!window.confirm(`Delete category "${cname}"?`)) return;
+    const typed = window.prompt(
+      `⚠️ To delete this category permanently, type the category name exactly:\n\n${cname}`
+    );
+    if (typed === null) return;
+    if (typed.trim() !== cname.trim()) {
+      alert("Category name did not match. Delete canceled.");
+      return;
+    }
     try {
       await api.delete(`/categories/delete_category/${cid}`);
       fetchCategories();
@@ -77,8 +86,11 @@ function Categories() {
     <div style={styles.page}>
         <div><Header/></div>
       {/* Header */}
-      <div style={styles.header}>
-        <div>
+      <div style={{ ...styles.header, flexWrap: "wrap", alignItems: "center" }}>
+        <button onClick={() => navigate("/Dashboard")} style={styles.backBtn}>
+          ← Back
+        </button>
+        <div style={{ flex: "1 1 auto", minWidth: "240px" }}>
           <h2 style={styles.title}>Categories</h2>
           <p style={styles.subtitle}>Manage your product categories</p>
         </div>
@@ -207,7 +219,9 @@ const styles = {
   countBadge:   { fontSize: "13px", color: "#64748b", backgroundColor: "#e2e8f0",
                   padding: "4px 10px", borderRadius: "20px" },
   tableWrapper: { backgroundColor: "white", borderRadius: "10px",
-                  boxShadow: "0 1px 6px rgba(0,0,0,0.07)", overflow: "hidden" },
+                  boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
+                  overflowX: "auto", overflowY: "auto",
+                  maxHeight: "calc(100vh - 280px)" },
   table:        { width: "100%", borderCollapse: "collapse" },
   theadRow:     { backgroundColor: "#f1f5f9" },
   th:           { padding: "12px 16px", textAlign: "left", fontSize: "12px",
@@ -247,6 +261,9 @@ const styles = {
   saveBtn:      { padding: "9px 20px", backgroundColor: "#2563eb", color: "white",
                   border: "none", borderRadius: "8px", cursor: "pointer",
                   fontSize: "14px", fontWeight: "600" },
+  backBtn:      { padding: "8px 16px", backgroundColor: "#e2e8f0", color: "#1f2937",
+                  border: "none", borderRadius: "8px", cursor: "pointer",
+                  fontSize: "13px", fontWeight: "700" },
 };
 
 export default Categories;

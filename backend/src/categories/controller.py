@@ -3,6 +3,7 @@ from src.categories.dtos import createCategoriesSchema, updateCategoriesSchema
 from src.utils.db import get_db
 from sqlalchemy.orm import Session
 from src.categories.model import categories
+from src.products.model import products
 
 def create_category(body: createCategoriesSchema, db: Session):
     existing_category = db.query(categories).filter(categories.cname == body.cname).first()
@@ -38,7 +39,11 @@ def delete_category(category_id: int, db: Session):
     existing_category = db.query(categories).filter(categories.cid == category_id).first()
     if not existing_category:
         raise HTTPException(404, detail="Category not found")
-
+    check_products = db.query(products).filter(products.cid == existing_category.cid).all()
+    if check_products:
+        for product in check_products:
+            product.is_active = False
+    
     existing_category.is_active = False
     db.commit()
 

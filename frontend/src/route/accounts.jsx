@@ -9,6 +9,7 @@ function Accounts() {
   const [searchParams] = useSearchParams();
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("Monthly");
   const [selectedCid, setSelectedCid] = useState(null);
   const [customerDetail, setCustomerDetail] = useState(null);
   const [payAmount, setPayAmount] = useState("");
@@ -29,12 +30,47 @@ function Accounts() {
     try {
       setLoading(true);
       const res = await api.get("/customer/get_all_customer");
-      // filter out Cash Customers
-      setCustomers((res.data || []).filter(c => c.cname !== "Cash Customer"));
+      setCustomers(res.data || []);
     } catch {
       setNotice("Failed to load customers");
     } finally { setLoading(false); }
   }
+
+  const monthlyCustomers = customers.filter(c => c.cname !== "Cash Customer");
+  const cashCustomers = customers.filter(c => c.cname === "Cash Customer");
+
+  const filteredMonthly = monthlyCustomers.filter(c =>
+    c.cname.toLowerCase().includes(search.toLowerCase()) ||
+    c.cphone.includes(search) ||
+    (c.cmail || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredCash = cashCustomers.filter(c =>
+    c.cname.toLowerCase().includes(search.toLowerCase()) ||
+    c.cphone.includes(search) ||
+    (c.cmail || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const tabCustomers = activeTab === "Monthly" ? filteredMonthly : filteredCash;
+  const tabLabel = activeTab === "Monthly" ? "Monthly Customers" : "Cash Customers";
+  const tabDescription = activeTab === "Monthly"
+    ? "Customers with active monthly account dues."
+    : "Cash-only customer records for one-time transactions.";
+
+  const handleMonthlyWhatsApp = (key, monthData) => {
+    const c = customerDetail.Customer;
+    const { label, bills } = monthData;
+    let msg = `*${c.cname}* - ${label} account summary\n`;
+    msg += `Total bills: ${bills.length}\n`;
+    bills.forEach((bill, i) => {
+      msg += `${i + 1}. Bill #${bill.bid} • Rs ${bill.total_amount.toFixed(2)}\n`;
+    });
+    msg += `\nTotal due: Rs ${c.currently_due_amount.toFixed(2)}`;
+    const url = c.cphone
+      ? `https://wa.me/91${c.cphone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
 
   async function openCustomer(cid) {
     setSelectedCid(cid);
@@ -207,12 +243,6 @@ function Accounts() {
   const totalDue = customers.reduce((s, c) => s + (c.currently_due_amount || 0), 0);
   const totalPaid = customers.reduce((s, c) => s + (c.last_paid_amount || 0), 0);
 
-  const filtered = customers.filter(c =>
-    c.cname.toLowerCase().includes(search.toLowerCase()) ||
-    c.cphone.includes(search) ||
-    (c.cmail || "").toLowerCase().includes(search.toLowerCase())
-  );
-
   // ── JSX ───────────────────────────────────────────────────
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f1f5f9" }}>
@@ -222,49 +252,56 @@ function Accounts() {
         {/* Top */}
         <div style={{
           display: "flex", justifyContent: "space-between",
-          alignItems: "center", marginBottom: "24px"
+          alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px"
         }}>
-          <div>
-            <h1 style={{
-              fontSize: "24px", fontWeight: "800",
-              color: "#1e3a5f", margin: 0
-            }}>Accounts</h1>
-            <p style={{ color: "#64748b", margin: "4px 0 0" }}>
-              Customer dues, payments, and bill history in one place.
-            </p>
-          </div>
-          <button onClick={() => navigate("/AddCustomer")} style={{
-            backgroundColor: "#1e3a5f", color: "white", border: "none",
-            borderRadius: "8px", padding: "10px 20px",
-            fontWeight: "700", fontSize: "14px", cursor: "pointer"
-          }}>+ Add Customer</button>
-        </div>
-
-        {/* Stats */}
-        <div style={{
-          display: "grid", gridTemplateColumns: "repeat(3,1fr)",
-          gap: "16px", marginBottom: "24px"
-        }}>
-          {[
-            { label: "Customers", value: customers.length, plain: true },
-            { label: "Total Due", value: `Rs ${totalDue.toFixed(2)}` },
-            { label: "Last Paid", value: `Rs ${totalPaid.toFixed(2)}` },
-          ].map((s, i) => (
-            <div key={i} style={{
-              backgroundColor: "white", borderRadius: "12px",
-              padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-            }}>
-              <div style={{
-                fontSize: "13px", color: "#64748b",
-                marginBottom: "8px"
-              }}>{s.label}</div>
-              <div style={{
-                fontSize: s.plain ? "32px" : "22px",
-                fontWeight: "800", color: "#1e3a5f"
-              }}>{s.value}</div>
+            <button onClick={() => navigate("/Dashboard")} style={{
+              backgroundColor: "#e2e8f0", color: "#1f2937", border: "none",
+              borderRadius: "8px", padding: "10px 18px",
+              fontWeight: "700", fontSize: "14px", cursor: "pointer"
+            }}>← Back</button>
+            <div style={{ flex: "1 1 auto", minWidth: "240px" }}>
+              <h1 style={{
+                fontSize: "24px", fontWeight: "800",
+                color: "#1e3a5f", margin: 0
+              }}>Accounts</h1>
+              <p style={{ color: "#64748b", margin: "4px 0 0" }}>
+                Monthly and cash customer accounts in one place.
+              </p>
             </div>
-          ))}
-        </div>
+            <button onClick={() => navigate("/AddCustomer")} style={{
+              backgroundColor: "#1e3a5f", color: "white", border: "none",
+              borderRadius: "8px", padding: "10px 20px",
+              fontWeight: "700", fontSize: "14px", cursor: "pointer"
+            }}>+ Add Customer</button>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "16px", marginBottom: "24px"
+          }}>
+            {[
+              { label: "Monthly Customers", value: monthlyCustomers.length },
+              { label: "Cash Customers", value: cashCustomers.length },
+              { label: "Total Due", value: `Rs ${totalDue.toFixed(2)}` },
+              { label: "Last Paid", value: `Rs ${totalPaid.toFixed(2)}` },
+            ].map((s, i) => (
+              <div key={i} style={{
+                backgroundColor: "white", borderRadius: "12px",
+                padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                minWidth: 0
+              }}>
+                <div style={{
+                  fontSize: "13px", color: "#64748b",
+                  marginBottom: "8px"
+                }}>{s.label}</div>
+                <div style={{
+                  fontSize: "22px",
+                  fontWeight: "800", color: "#1e3a5f"
+                }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
 
         {notice && (
           <div style={{
@@ -274,98 +311,123 @@ function Accounts() {
           }}>{notice}</div>
         )}
 
-        {/* Customer List */}
-        <div style={{
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "24px" }}>
+          {['Monthly', 'Cash'].map(tab => (
+            <button key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                flex: 1, minWidth: "140px",
+                padding: "12px 16px",
+                borderRadius: "12px",
+                border: activeTab === tab ? "2px solid #1e3a5f" : "1px solid #d1d5db",
+                backgroundColor: activeTab === tab ? "#1e3a5f" : "white",
+                color: activeTab === tab ? "white" : "#1e293b",
+                fontWeight: 700,
+                cursor: "pointer"
+              }}>
+              {tab} Customers
+            </button>
+          ))}
+        </div>
+
+        <section style={{
           backgroundColor: "white", borderRadius: "12px",
           padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-          marginBottom: "24px"
+          overflow: "hidden"
         }}>
           <div style={{
-            display: "flex", justifyContent: "space-between",
-            alignItems: "center", marginBottom: "16px"
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", flexWrap: "wrap", gap: "12px",
+            marginBottom: "18px"
           }}>
-            <h2 style={{
-              fontSize: "18px", fontWeight: "700",
-              color: "#1e3a5f", margin: 0
-            }}>Customer Accounts</h2>
+            <div>
+              <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#1e3a5f", margin: 0 }}>
+                {tabLabel}
+              </h2>
+              <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "13px" }}>
+                {tabDescription}
+              </p>
+            </div>
             <input
               type="text"
               placeholder="Search name, phone, email"
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
-                padding: "8px 14px", border: "1px solid #e2e8f0",
-                borderRadius: "8px", fontSize: "13px", width: "240px",
+                flex: "1 1 240px",
+                maxWidth: "320px",
+                padding: "10px 14px", border: "1px solid #e2e8f0",
+                borderRadius: "8px", fontSize: "13px", width: "100%",
                 outline: "none"
               }}
             />
           </div>
-
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #f1f5f9" }}>
-                {["NAME", "PHONE", "EMAIL", "DUE", "LAST PAID", "ACTION"].map(h => (
-                  <th key={h} style={{
-                    padding: "10px 12px", textAlign: "left",
-                    fontSize: "11px", color: "#64748b",
-                    fontWeight: "700", letterSpacing: "0.5px"
-                  }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(c => (
-                <tr key={c.cid} style={{ borderBottom: "1px solid #f8fafc" }}>
-                  <td style={{
-                    padding: "14px 12px", fontWeight: "700",
-                    color: "#1e293b"
-                  }}>{c.cname}</td>
-                  <td style={{
-                    padding: "14px 12px",
-                    color: "#475569"
-                  }}>{c.cphone}</td>
-                  <td style={{
-                    padding: "14px 12px",
-                    color: "#475569"
-                  }}>{c.cmail || "-"}</td>
-                  <td style={{ padding: "14px 12px" }}>
-                    <span style={{
-                      color: c.currently_due_amount > 0 ? "#dc2626" : "#15803d",
-                      fontWeight: "700"
-                    }}>Rs {parseFloat(c.currently_due_amount || 0).toFixed(2)}</span>
-                  </td>
-                  <td style={{
-                    padding: "14px 12px",
-                    color: "#475569"
-                  }}>
-                    Rs {parseFloat(c.last_paid_amount || 0).toFixed(2)}
-                  </td>
-                  <td style={{ padding: "14px 12px" }}>
-                    <button onClick={() => openCustomer(c.cid)} style={{
-                      backgroundColor: "#1e3a5f", color: "white",
-                      border: "none", borderRadius: "6px",
-                      padding: "6px 14px", cursor: "pointer",
-                      fontSize: "12px", fontWeight: "700", marginRight: "8px"
-                    }}>👁 View</button>
-                    <button onClick={() => openCustomer(c.cid)} disabled={!(c.currently_due_amount > 0)} style={{
-                      backgroundColor: c.currently_due_amount > 0 ? "#d97706" : "#e5e7eb",
-                      color: c.currently_due_amount > 0 ? "white" : "#9ca3af",
-                      border: "none", borderRadius: "6px",
-                      padding: "6px 14px", cursor: c.currently_due_amount > 0 ? "pointer" : "not-allowed",
-                      fontSize: "12px", fontWeight: "700"
-                    }}>💰 Paybill</button>
-                  </td>
+          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "420px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "720px" }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid #f1f5f9" }}>
+                  {['NAME', 'PHONE', 'EMAIL', 'DUE', 'LAST PAID', 'ACTION'].map(h => (
+                    <th key={h} style={{
+                      padding: "12px 14px", textAlign: "left",
+                      fontSize: "11px", color: "#64748b",
+                      fontWeight: "700", letterSpacing: "0.5px"
+                    }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {tabCustomers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: "18px", color: "#64748b", textAlign: "center" }}>
+                      No {activeTab.toLowerCase()} customers found.
+                    </td>
+                  </tr>
+                ) : tabCustomers.map(c => (
+                  <tr key={c.cid} style={{ borderBottom: "1px solid #f8fafc" }}>
+                    <td style={{ padding: "14px 14px", fontWeight: "700", color: "#1e293b" }}>{c.cname}</td>
+                    <td style={{ padding: "14px 14px", color: "#475569" }}>{c.cphone}</td>
+                    <td style={{ padding: "14px 14px", color: "#475569" }}>{c.cmail || "-"}</td>
+                    <td style={{ padding: "14px 14px" }}>
+                      <span style={{
+                        color: c.currently_due_amount > 0 ? "#dc2626" : "#15803d",
+                        fontWeight: "700"
+                      }}>
+                        Rs {parseFloat(c.currently_due_amount || 0).toFixed(2)}
+                      </span>
+                    </td>
+                    <td style={{ padding: "14px 14px", color: "#475569" }}>
+                      Rs {parseFloat(c.last_paid_amount || 0).toFixed(2)}
+                    </td>
+                    <td style={{ padding: "14px 14px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                      <button onClick={() => openCustomer(c.cid)} style={{
+                        backgroundColor: "#1e3a5f", color: "white",
+                        border: "none", borderRadius: "6px",
+                        padding: "8px 14px", cursor: "pointer",
+                        fontSize: "12px", fontWeight: "700"
+                      }}>👁 View</button>
+                      {activeTab === "Monthly" && (
+                        <button onClick={() => openCustomer(c.cid)} disabled={!(c.currently_due_amount > 0)} style={{
+                          backgroundColor: c.currently_due_amount > 0 ? "#d97706" : "#e5e7eb",
+                          color: c.currently_due_amount > 0 ? "white" : "#9ca3af",
+                          border: "none", borderRadius: "6px",
+                          padding: "8px 14px", cursor: c.currently_due_amount > 0 ? "pointer" : "not-allowed",
+                          fontSize: "12px", fontWeight: "700"
+                        }}>💰 Paybill</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         {/* Customer Detail Panel */}
         {selectedCid && (
           <div style={{
             backgroundColor: "white", borderRadius: "12px",
-            padding: "24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+            padding: "24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            overflowY: "auto", maxHeight: "540px"
           }}>
 
             {!customerDetail ? (

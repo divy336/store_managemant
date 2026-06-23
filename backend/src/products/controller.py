@@ -30,7 +30,7 @@ def create_product(body: createProductSchema, db: Session):
     # Check duplicate product name in same category
     existing = db.query(products).filter(
         products.product_name == body.product_name,
-        products.cid == body.cid
+        products.cid == body.cid, products.is_active == True
     ).first()
     if existing:
         raise HTTPException(400, detail="Product already exists in this category")

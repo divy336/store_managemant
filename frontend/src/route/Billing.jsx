@@ -413,8 +413,9 @@ const handleWhatsApp = async () => {
 
             {/* Category Cards */}
             <div style={{
-              display: "flex", flexWrap: "wrap",
-              gap: "10px", marginBottom: "18px"
+              display: "flex", flexWrap: "nowrap",
+              gap: "10px", marginBottom: "18px",
+              overflowX: "auto", paddingBottom: "6px"
             }}>
               {categories.map(cat => {
                 const isActive = activeCategory === cat.cid;
@@ -464,7 +465,8 @@ const handleWhatsApp = async () => {
             {activeCategory && activeCat && (
               <div style={{
                 backgroundColor: "white", borderRadius: "12px",
-                overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.07)"
+                overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
+                maxHeight: "calc(100vh - 320px)", overflowY: "auto"
               }}>
                 <div style={{
                   display: "flex", justifyContent: "space-between",
@@ -647,30 +649,40 @@ const handleWhatsApp = async () => {
             )}
 
             {/* 3 Share Buttons */}
-            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
               <button onClick={handleWhatsApp} style={{
-                flex: 1, padding: "10px 0", backgroundColor: "#16a34a",
+                flex: 1, minWidth: "120px", padding: "10px 0", backgroundColor: "#16a34a",
                 color: "white", border: "none", borderRadius: "8px",
                 cursor: "pointer", fontSize: "13px", fontWeight: "700"
               }}>📱 WhatsApp</button>
               
               <button onClick={handleDownloadPDF} style={{
-                flex: 1, padding: "10px 0", backgroundColor: "#dc2626",
+                flex: 1, minWidth: "120px", padding: "10px 0", backgroundColor: "#dc2626",
                 color: "white", border: "none", borderRadius: "8px",
                 cursor: "pointer", fontSize: "13px", fontWeight: "700"
               }}>⬇ PDF</button>
             </div>
 
-            <button
-onClick={() => setBillDone(null)}
-
-              style={{
-                width: "100%", padding: "11px 0",
-                backgroundColor: "#1e3a5f", color: "white",
-                border: "none", borderRadius: "8px",
-                cursor: "pointer", fontSize: "14px", fontWeight: "700"
-              }}
-            >+ New Bill</button>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <button
+                onClick={() => setBillDone(null)}
+                style={{
+                  flex: 1, minWidth: "120px", padding: "11px 0",
+                  backgroundColor: "#9ca3af", color: "white",
+                  border: "none", borderRadius: "8px",
+                  cursor: "pointer", fontSize: "14px", fontWeight: "700"
+                }}
+              >Cancel</button>
+              <button
+                onClick={() => setBillDone(null)}
+                style={{
+                  flex: 1, minWidth: "120px", padding: "11px 0",
+                  backgroundColor: "#1e3a5f", color: "white",
+                  border: "none", borderRadius: "8px",
+                  cursor: "pointer", fontSize: "14px", fontWeight: "700"
+                }}
+              >New Bill</button>
+            </div>
           </div>
         </div>
       )}
