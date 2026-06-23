@@ -510,8 +510,26 @@ const handleWhatsApp = async () => {
                           key={product.pid}
                         >
                           <div className="billing-product-image">
-                            <span>{product.product_name.charAt(0).toUpperCase()}</span>
-                          </div>
+  {product.image_url ? (
+    <img
+      src={`${api.defaults.baseURL}${product.image_url}`}
+      alt={product.product_name}
+      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      onError={(e) => {
+        e.target.style.display = "none";
+        e.target.nextSibling.style.display = "flex";
+      }}
+    />
+  ) : null}
+  <span style={{
+    display: product.image_url ? "none" : "flex",
+    width: "100%", height: "100%",
+    alignItems: "center", justifyContent: "center",
+    fontSize: "28px", fontWeight: "800", color: "#0369a1"
+  }}>
+    {product.product_name.charAt(0).toUpperCase()}
+  </span>
+</div>
                           <div className="billing-product-body">
                             <h3>{product.product_name}</h3>
                             <p>{product.unit || ""}</p>
