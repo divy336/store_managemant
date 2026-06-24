@@ -18,6 +18,7 @@ from src.history.router import history_route
 from fastapi.middleware.cors import CORSMiddleware
 
 import os
+
 app = FastAPI()
 
 app.add_middleware(
