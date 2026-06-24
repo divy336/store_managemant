@@ -64,32 +64,33 @@ function Accounts() {
   }
 
   // ── WHATSAPP BILL ─────────────────────────────────────────
-  const handleWhatsApp = (bill, items) => {
-    const c = customerDetail.Customer;
-    const date = new Date(bill.created_at).toLocaleDateString("en-IN", {
-      day: "2-digit", month: "short", year: "numeric"
-    });
+const handleWhatsApp = (bill, items) => {
+  const c = customerDetail.Customer;
+  const date = new Date(bill.created_at).toLocaleDateString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric"
+  });
 
-    let msg = `🏪 *GANGADHAR PROVISION STORE*\n`;
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `🔖 Bill #${bill.bid}  |  📅 ${date}\n`;
-    msg += `👤 ${c.cname}  |  💳 ${bill.payment_type}\n`;
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    items.forEach((item, i) => {
-      msg += `${i + 1}. ${item.product_name} x${item.quantity} = Rs.${item.subtotal.toFixed(2)}\n`;
-    });
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `💰 *Total : Rs.${bill.total_amount.toFixed(2)}*\n`;
-    msg += `🔴 Due   : Rs.${c.currently_due_amount.toFixed(2)}\n`;
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `🙏 Gangadhar Provision Store`;
+  const itemLines = items
+    .map((item, i) => `${i + 1}. ${item.product_name} x${item.quantity} = Rs.${item.subtotal.toFixed(2)}`)
+    .join("\n");
 
-    const url = c.cphone
-      ? `https://wa.me/91${c.cphone}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-  };
+  const msg = [
+    `🏪 *GANGADHAR PROVISION STORE*`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🔖 Bill #${bill.bid}  |  📅 ${date}`,
+    `👤 ${c.cname}  |  💳 ${bill.payment_type}`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    itemLines,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `💰 *Total : Rs.${bill.total_amount.toFixed(2)}*`,
+    `🔴 Due   : Rs.${c.currently_due_amount.toFixed(2)}`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🙏 Gangadhar Provision Store`,
+  ].join("\n");
 
+  const phone = c.cphone ? `91${c.cphone}` : "";
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+};
   // ── PDF DOWNLOAD ──────────────────────────────────────────
   const handlePDF = async (bill, items) => {
     const c = customerDetail.Customer;
@@ -125,42 +126,42 @@ function Accounts() {
   };
 
   // ── MONTHLY STATEMENT WHATSAPP ────────────────────────────
-  const handleMonthlyWhatsApp = (key, monthData) => {
-    const c = customerDetail.Customer;
-    const { label, bills, total } = monthData;
+const handleMonthlyWhatsApp = (key, monthData) => {
+  const c = customerDetail.Customer;
+  const { label, bills, total } = monthData;
 
-    let msg = `🏪 *GANGADHAR PROVISION STORE*\n`;
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `📊 *${label} Statement*\n`;
-    msg += `👤 ${c.cname}  |  📞 ${c.cphone}\n`;
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-    bills.forEach((bill, idx) => {
-      const billItems = customerDetail.BillItems.filter(i => i.bid === bill.bid);
-      const date = new Date(bill.created_at).toLocaleDateString("en-IN", {
-        day: "2-digit", month: "short"
-      });
-      msg += `${idx + 1}. Bill #${bill.bid} — ${date}\n`;
-      billItems.forEach(item => {
-        msg += `   • ${item.product_name} x${item.quantity} = Rs.${item.subtotal.toFixed(2)}\n`;
-      });
-      msg += `   💰 Rs.${bill.total_amount.toFixed(2)}\n\n`;
+  const billLines = bills.map((bill, idx) => {
+    const billItems = customerDetail.BillItems.filter(i => i.bid === bill.bid);
+    const date = new Date(bill.created_at).toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short"
     });
+    const itemLines = billItems
+      .map(item => `   • ${item.product_name} x${item.quantity} = Rs.${item.subtotal.toFixed(2)}`)
+      .join("\n");
+    return `${idx + 1}. Bill #${bill.bid} — ${date}\n${itemLines}\n   💰 Rs.${bill.total_amount.toFixed(2)}`;
+  }).join("\n\n");
 
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `📦 Bills      : ${bills.length}\n`;
-    msg += `💰 Month Total: *Rs.${total.toFixed(2)}*\n`;
-    msg += `🔴 Total Due  : *Rs.${c.currently_due_amount.toFixed(2)}*\n`;
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `🙏 Please clear dues.\n`;
-    msg += `📍 Gangadhar Provision Store`;
+  const msg = [
+    `🏪 *GANGADHAR PROVISION STORE*`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `📊 *${label} Statement*`,
+    `👤 ${c.cname}  |  📞 ${c.cphone}`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    ``,
+    billLines,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `📦 Bills      : ${bills.length}`,
+    `💰 Month Total: *Rs.${total.toFixed(2)}*`,
+    `🔴 Total Due  : *Rs.${c.currently_due_amount.toFixed(2)}*`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🙏 Please clear dues.`,
+    `📍 Gangadhar Provision Store`,
+  ].join("\n");
 
-    const url = c.cphone
-      ? `https://wa.me/91${c.cphone}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-  };
-
+  const phone = c.cphone ? `91${c.cphone}` : "";
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+};
   // ── MONTHLY PDF ───────────────────────────────────────────
   const handleMonthlyPDF = async (key, monthData) => {
     const c = customerDetail.Customer;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/api";
+import { isValidPhone } from "../utils/validation";
 import Header from "../components/Hader";
 import Footer from "../components/Footer";
 import "../style/billing.css";
@@ -67,7 +68,7 @@ function Billing() {
     setQuantities(prev => ({ ...prev, [pid]: Math.max(0, next) }));
 
   const canGenerate = selectedItems.length > 0 && !saving &&
-    paymentType === "Cash" && cashPhone.length >= 10;
+    paymentType === "Cash" && isValidPhone(cashPhone);
 
   const canAddToAccount = selectedItems.length > 0 && !saving &&
     paymentType === "Monthly Account" && !!selectedCustomer;
@@ -412,8 +413,9 @@ function Billing() {
 
             {/* Category Cards */}
             <div style={{
-              display: "flex", flexWrap: "wrap",
-              gap: "10px", marginBottom: "18px"
+              display: "flex", flexWrap: "nowrap",
+              gap: "10px", marginBottom: "18px",
+              overflowX: "auto", paddingBottom: "6px"
             }}>
               {categories.map(cat => {
                 const isActive = activeCategory === cat.cid;
@@ -465,7 +467,8 @@ function Billing() {
             {activeCategory && activeCat && (
               <div style={{
                 backgroundColor: "white", borderRadius: "12px",
-                overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.07)"
+                overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
+                maxHeight: "calc(100vh - 320px)", overflowY: "auto"
               }}>
                 <div style={{
                   display: "flex", justifyContent: "space-between",
@@ -660,15 +663,15 @@ function Billing() {
             )}
 
             {/* 3 Share Buttons */}
-            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
               <button onClick={handleWhatsApp} style={{
-                flex: 1, padding: "10px 0", backgroundColor: "#16a34a",
+                flex: 1, minWidth: "120px", padding: "10px 0", backgroundColor: "#16a34a",
                 color: "white", border: "none", borderRadius: "8px",
                 cursor: "pointer", fontSize: "13px", fontWeight: "700"
               }}>📱 WhatsApp</button>
 
               <button onClick={handleDownloadPDF} style={{
-                flex: 1, padding: "10px 0", backgroundColor: "#dc2626",
+                flex: 1, minWidth: "120px", padding: "10px 0", backgroundColor: "#dc2626",
                 color: "white", border: "none", borderRadius: "8px",
                 cursor: "pointer", fontSize: "13px", fontWeight: "700"
               }}>⬇ PDF</button>

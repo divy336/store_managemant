@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/api";
+import { isAllowedName, isNonNegativeNumber } from "../utils/validation";
 import Header from "../components/Hader";
 import Footer from "../components/Footer";
 const API_BASE = api.defaults.baseURL || "";
@@ -7,6 +9,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
 function Products() {
+  const navigate = useNavigate();
   const [categories, setCategories]     = useState([]);
   const [allProducts, setAllProducts]   = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
@@ -20,7 +23,7 @@ function Products() {
   const [showCamera, setShowCamera]     = useState(false);
   const [cameraError, setCameraError]   = useState("");
   const [form, setForm] = useState({
-    product_name: "", cid: "", unit: "", price: ""
+    product_name: "", cid: "", unit: "" || 0, price: ""
   });
 
   const videoRef  = useRef(null);
@@ -184,8 +187,10 @@ function Products() {
 
   const handleSave = async () => {
     if (!form.product_name.trim()) { alert("Product name is required"); return; }
+    if (!isAllowedName(form.product_name)) { alert("Product name must contain letters and may include numbers/spaces, but cannot be only numbers or special symbols."); return; }
     if (!form.cid) { alert("Please select a category"); return; }
-    if (!form.price) { alert("Price is required"); return; }
+    if (!isNonNegativeNumber(form.price) || Number(form.price) <= 0) { alert("Price must be a positive number"); return; }
+    if (form.unit && !/^[A-Za-z0-9]+$/.test(form.unit)) { alert("Unit should contain letters and number only (e.g. 1kg, 10gm,3pcs)"); return; }
     try {
       setLoading(true);
       let pid;
@@ -247,11 +252,14 @@ function Products() {
           <h2 style={styles.title}>Products</h2>
           <p style={styles.subtitle}>Click a category to view products</p>
         </div>
-        <button onClick={openAdd} style={styles.addBtn}>+ Add Product</button>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <button onClick={() => navigate("/Dashboard")} style={styles.backBtn}>← Back</button>
+          <button onClick={openAdd} style={styles.addBtn}>+ Add Product</button>
+        </div>
       </div>
 
       {/* Category Cards */}
-      <div style={styles.cardGrid}>
+      <div style={{ ...styles.cardGrid, overflowX: "auto", paddingBottom: "8px" }}>
         {categories.map((cat) => {
           const selected = getTotalSelected(cat.cid);
           const isActive = activeCategory === cat.cid;
@@ -298,7 +306,7 @@ function Products() {
           </div>
 
           {/* Product Cards */}
-          <div style={styles.productGrid}>
+          <div style={{ ...styles.productGrid, overflowY: "auto", maxHeight: "calc(100vh - 420px)" }}>
             {getFiltered(activeCategory).length === 0 ? (
               <div style={styles.emptyMsg}>
                 No products yet. Click "+ Add Product" to add.
@@ -484,7 +492,9 @@ const styles = {
   addBtn:           { padding: "10px 20px", backgroundColor: "#2563eb", color: "white",
                       border: "none", borderRadius: "8px", cursor: "pointer",
                       fontSize: "14px", fontWeight: "600" },
-  cardGrid:         { display: "flex", flexWrap: "wrap", gap: "14px", marginBottom: "28px" },
+  cardGrid:         { display: "flex", flexWrap: "nowrap", gap: "14px", marginBottom: "28px",
+                      overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch",
+                      paddingBottom: "8px", minWidth: 0 },
   catCard:          { width: "130px", padding: "16px 12px", backgroundColor: "white",
                       borderRadius: "12px", border: "2px solid #e2e8f0",
                       cursor: "pointer", textAlign: "center",
@@ -515,7 +525,8 @@ const styles = {
   searchInput:      { padding: "8px 12px", border: "1px solid rgba(255,255,255,0.3)",
                       borderRadius: "6px", fontSize: "13px", width: "200px",
                       backgroundColor: "rgba(255,255,255,0.1)", color: "white", outline: "none" },
-  productGrid:      { display: "flex", flexWrap: "wrap", gap: "16px", padding: "20px" },
+  productGrid:      { display: "flex", flexWrap: "wrap", gap: "16px", padding: "20px",
+                      overflowY: "auto", maxHeight: "calc(100vh - 420px)" },
   productCard:      { width: "170px", backgroundColor: "white", border: "1px solid #e2e8f0",
                       borderRadius: "12px", overflow: "hidden",
                       boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
@@ -590,6 +601,9 @@ const styles = {
   saveBtn:          { padding: "9px 20px", backgroundColor: "#2563eb", color: "white",
                       border: "none", borderRadius: "8px", cursor: "pointer",
                       fontSize: "14px", fontWeight: "600" },
+  backBtn:          { padding: "10px 18px", backgroundColor: "#e2e8f0", color: "#1f2937",
+                      border: "none", borderRadius: "8px", cursor: "pointer",
+                      fontSize: "14px", fontWeight: "700" },
 };
 
 export default Products;

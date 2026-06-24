@@ -6,12 +6,12 @@ import Footer from "../components/Footer";
 
 function PaymentHistory() {
   const navigate = useNavigate();
-  const [customers, setCustomers]         = useState([]);
-  const [selectedCid, setSelectedCid]     = useState(null);
-  const [selectedName, setSelectedName]   = useState("");
-  const [history, setHistory]             = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [histLoading, setHistLoading]     = useState(false);
+  const [customers, setCustomers]     = useState([]);
+  const [selectedCid, setSelectedCid] = useState(null);
+  const [selectedName, setSelectedName] = useState("");
+  const [history, setHistory]         = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [histLoading, setHistLoading] = useState(false);
 
   useEffect(() => { loadCustomers(); }, []);
 
@@ -46,7 +46,7 @@ function PaymentHistory() {
         {/* Top */}
         <div style={{ display: "flex", alignItems: "center",
           gap: "14px", marginBottom: "24px" }}>
-          <button onClick={() => navigate("/Accounts")} style={{
+          <button onClick={() => navigate("/accounts")} style={{
             backgroundColor: "#f1f5f9", color: "#1e3a5f", border: "none",
             borderRadius: "8px", padding: "8px 14px",
             cursor: "pointer", fontWeight: "700", fontSize: "13px"
@@ -65,12 +65,9 @@ function PaymentHistory() {
           <p style={{ textAlign: "center", color: "#64748b" }}>Loading...</p>
         ) : customers.length === 0 ? (
           <div style={{ textAlign: "center", color: "#94a3b8",
-            padding: "60px", backgroundColor: "white",
-            borderRadius: "12px" }}>
+            padding: "60px", backgroundColor: "white", borderRadius: "12px" }}>
             <div style={{ fontSize: "48px", marginBottom: "12px" }}>📭</div>
-            <div style={{ fontWeight: "700", fontSize: "16px" }}>
-              No history yet
-            </div>
+            <div style={{ fontWeight: "700", fontSize: "16px" }}>No history yet</div>
             <div style={{ fontSize: "13px", marginTop: "6px" }}>
               History is saved when you delete a month from Accounts page
             </div>
@@ -90,21 +87,20 @@ function PaymentHistory() {
                     borderRadius: "10px", padding: "14px 20px",
                     cursor: "pointer", minWidth: "140px",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                    textAlign: "center", transition: "all 0.15s"
+                    textAlign: "center"
                   }}>
-                  <div style={{ fontSize: "28px", fontWeight: "800",
+                  <div style={{
                     width: "44px", height: "44px", borderRadius: "50%",
                     backgroundColor: selectedCid === c.cid
                       ? "rgba(255,255,255,0.2)" : "#eff6ff",
                     display: "flex", alignItems: "center",
                     justifyContent: "center", margin: "0 auto 8px",
+                    fontSize: "20px", fontWeight: "800",
                     color: selectedCid === c.cid ? "white" : "#1e3a5f"
                   }}>
                     {c.cname.charAt(0).toUpperCase()}
                   </div>
-                  <div style={{ fontWeight: "700", fontSize: "13px" }}>
-                    {c.cname}
-                  </div>
+                  <div style={{ fontWeight: "700", fontSize: "13px" }}>{c.cname}</div>
                   <div style={{ fontSize: "11px", marginTop: "2px",
                     opacity: 0.7 }}>{c.cphone}</div>
                 </div>
@@ -120,9 +116,7 @@ function PaymentHistory() {
                 </h2>
 
                 {histLoading ? (
-                  <p style={{ textAlign: "center", color: "#64748b" }}>
-                    Loading...
-                  </p>
+                  <p style={{ textAlign: "center", color: "#64748b" }}>Loading...</p>
                 ) : history.length === 0 ? (
                   <p style={{ textAlign: "center", color: "#94a3b8" }}>
                     No history found.
@@ -139,17 +133,14 @@ function PaymentHistory() {
                         display: "flex", justifyContent: "space-between",
                         alignItems: "center"
                       }}>
-                        <div style={{ display: "flex", alignItems: "center",
-                          gap: "10px" }}>
-                          <span style={{ fontWeight: "800", color: "white",
-                            fontSize: "15px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontWeight: "800", color: "white", fontSize: "15px" }}>
                             📅 {month.month_label}
                           </span>
                           <span style={{
-                            backgroundColor: "rgba(255,255,255,0.15)",
-                            color: "#93c5fd", fontSize: "11px",
-                            fontWeight: "700", padding: "2px 8px",
-                            borderRadius: "20px"
+                            backgroundColor: "rgba(255,255,255,0.15)", color: "#93c5fd",
+                            fontSize: "11px", fontWeight: "700",
+                            padding: "2px 8px", borderRadius: "20px"
                           }}>{month.bills.length} bills</span>
                           <span style={{
                             backgroundColor: "#15803d", color: "white",
@@ -157,8 +148,7 @@ function PaymentHistory() {
                             padding: "2px 8px", borderRadius: "20px"
                           }}>✅ Cleared</span>
                         </div>
-                        <span style={{ fontWeight: "800", color: "#fcd34d",
-                          fontSize: "15px" }}>
+                        <span style={{ fontWeight: "800", color: "#fcd34d", fontSize: "15px" }}>
                           Rs {month.month_total.toFixed(2)}
                         </span>
                       </div>
@@ -177,28 +167,23 @@ function PaymentHistory() {
                             <div style={{
                               display: "flex", justifyContent: "space-between",
                               alignItems: "center", padding: "10px 16px",
-                              backgroundColor: "#f8fafc",
-                              flexWrap: "wrap", gap: "8px"
+                              backgroundColor: "#f8fafc", flexWrap: "wrap", gap: "8px"
                             }}>
-                              <div style={{ display: "flex", gap: "10px",
-                                alignItems: "center" }}>
+                              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                                 <span style={{
-                                  width: "22px", height: "22px",
-                                  borderRadius: "50%",
+                                  width: "22px", height: "22px", borderRadius: "50%",
                                   backgroundColor: "#1e3a5f", color: "white",
                                   fontSize: "10px", fontWeight: "700",
-                                  display: "flex", alignItems: "center",
-                                  justifyContent: "center"
+                                  display: "flex", alignItems: "center", justifyContent: "center"
                                 }}>{billIdx + 1}</span>
-                                <span style={{ fontWeight: "700",
-                                  color: "#1e3a5f", fontSize: "13px" }}>
-                                  Bill #{bill.bid}
+                                <span style={{ fontWeight: "700", color: "#1e3a5f",
+                                  fontSize: "13px" }}>Bill #{bill.bid}</span>
+                                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                                  {billDate}
                                 </span>
-                                <span style={{ fontSize: "12px",
-                                  color: "#64748b" }}>{billDate}</span>
                               </div>
-                              <span style={{ fontWeight: "800",
-                                color: "#1e3a5f", fontSize: "14px" }}>
+                              <span style={{ fontWeight: "800", color: "#1e3a5f",
+                                fontSize: "14px" }}>
                                 Rs {bill.bill_total.toFixed(2)}
                               </span>
                             </div>
@@ -207,12 +192,10 @@ function PaymentHistory() {
                                 <div key={i} style={{
                                   display: "flex", justifyContent: "space-between",
                                   fontSize: "12px", padding: "3px 0",
-                                  borderBottom: "1px solid #f8fafc",
-                                  color: "#64748b"
+                                  borderBottom: "1px solid #f8fafc", color: "#64748b"
                                 }}>
                                   <span>{item.product_name} x{item.quantity}</span>
-                                  <span style={{ fontWeight: "600",
-                                    color: "#475569" }}>
+                                  <span style={{ fontWeight: "600", color: "#475569" }}>
                                     Rs {item.subtotal.toFixed(2)}
                                   </span>
                                 </div>
@@ -229,8 +212,7 @@ function PaymentHistory() {
                         display: "flex", justifyContent: "space-between",
                         alignItems: "center"
                       }}>
-                        <span style={{ fontWeight: "700", color: "#15803d",
-                          fontSize: "13px" }}>
+                        <span style={{ fontWeight: "700", color: "#15803d", fontSize: "13px" }}>
                           ✅ Cleared Total: Rs {month.month_total.toFixed(2)}
                         </span>
                         <span style={{ fontSize: "12px", color: "#64748b" }}>

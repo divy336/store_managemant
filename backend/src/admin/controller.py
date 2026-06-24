@@ -3,21 +3,12 @@ from src.admin.dtos import loginSchema, RegisterSchema, SendOTPSchema, VerifyOTP
 from src.utils.db import get_db
 from sqlalchemy.orm import Session
 from src.admin.model import admin, OTPVerification
-from pwdlib import PasswordHash
 from src.utils.settings import settings
 from datetime import datetime, timedelta, timezone
 import jwt
 import random
 import requests
-from src.utils.settings import settings
-
-password_hash = PasswordHash.recommended()
-
-def get_password_hash(password):
-    return password_hash.hash(password)
-
-def verify_password(plain_password, hashed_password):
-    return password_hash.verify(plain_password, hashed_password)
+from src.utils.auth import hash_password, verify_password, create_access_token
 
 
 def admin_registar(body: RegisterSchema, db: Session):
@@ -26,7 +17,6 @@ def admin_registar(body: RegisterSchema, db: Session):
     if existing:
         raise HTTPException(400, detail="Only One admin allowed")
 
-    
     otp_code = str(random.randint(100000, 999999))
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
     new_otp = OTPVerification(
@@ -39,11 +29,13 @@ def admin_registar(body: RegisterSchema, db: Session):
     db.commit()
 
     send_otp_email_via_brevo(body.email, otp_code, body.username)
-    hash_password = get_password_hash(body.password)
+
+    hashed_pw = hash_password(body.password)
+
     new_admin = admin(
         username=body.username,
         email=body.email,
-        password=hash_password,
+        password=hashed_pw,       # ✅ fixed: was 'apassword', model has 'password'
         is_verified=False
     )
     db.add(new_admin)
@@ -85,8 +77,8 @@ def send_otp_email_via_brevo(email: str, otp_code: str, username: str):
     }
     payload = {
         "sender": {
-            "name": settings.SHOP_NAME,         
-            "email": settings.SENDER_EMAIL      
+            "name": settings.SHOP_NAME,
+            "email": settings.SENDER_EMAIL
         },
         "to": [{"email": email, "name": username}],
         "subject": "Your OTP for Smart Shop Login",
@@ -124,18 +116,14 @@ def verify_otp(body: VerifyOTPSchema, db: Session):
     if not otp_record:
         raise HTTPException(400, detail="No OTP found. Please request a new OTP.")
 
-    # Check expiry
     if otp_record.expires_at < now:
         raise HTTPException(400, detail="OTP has expired. Please request a new OTP.")
 
-    # Check code match
     if otp_record.otp_code != body.otp_code:
         raise HTTPException(400, detail="Wrong OTP. Please try again.")
 
-    # Mark OTP as used
     otp_record.is_used = True
 
-    # Mark admin as verified
     owner = db.query(admin).filter(admin.email == body.email).first()
     owner.is_verified = True
 
@@ -145,18 +133,41 @@ def verify_otp(body: VerifyOTPSchema, db: Session):
 
 
 def admin_login(body: loginSchema, db: Session):
-    owner = db.query(admin).filter(admin.username == body.username).first()
-    if not owner:
-        raise HTTPException(400, detail="No user found with given username")
-    if not verify_password(body.password, owner.password):
-        raise HTTPException(401, detail="Incorrect password")
-    if not owner.is_verified:
-        raise HTTPException(403, detail="Email not verified. Please verify your email first.")
+    owner = db.query(admin).filter(
+        admin.username == body.username
+    ).first()
 
-    exp_time = datetime.now(timezone.utc) + timedelta(days=int(settings.EXP_TIME))
-    token = jwt.encode(
-        {"_id": owner.id, "username": owner.username, "exp": exp_time},
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
-    )
-    return {"access_token": token, "token_type": "bearer"}
+    if not owner:
+        raise HTTPException(
+            400,
+            detail="No user found with given username"
+        )
+
+    if not verify_password(
+        body.password,
+        owner.password
+    ):
+        raise HTTPException(
+            401,
+            detail="Incorrect password"
+        )
+
+    if not owner.is_verified:
+        raise HTTPException(
+            403,
+            detail="Email not verified. Please verify your email first."
+        )
+
+    token = create_access_token({
+        "admin_id": owner.id,
+        "username": owner.username
+    })
+
+    return {
+        "token": token,
+        "admin": {
+            "id": owner.id,
+            "username": owner.username,
+            "email": owner.email
+        }
+    }

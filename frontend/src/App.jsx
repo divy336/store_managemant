@@ -1,5 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Billing from "./route/Billing";
 import Accounts from "./route/accounts";
@@ -10,24 +9,48 @@ import Signup from "./auth/Signup";
 import Dashboard from "./route/Dashboard";
 import VerifyOtp from "./auth/VerifyOtp";
 import PaymentHistory from "./route/PaymentHistory";
+import AddCustomer from "./route/AddCustomer";
+
+// ✅ ProtectedRoute — redirects to /login if no token
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("token");
+  if (!token) return <Navigate to="/login" replace />;
+  return children;
+}
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-      
-        <Route path="Dashboard" element={<Dashboard />} />
-        <Route path="/billing" element={<Billing />} />
-        <Route path="/accounts" element={<Accounts />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/PaymentHistory" element={<PaymentHistory />} />
 
-        
+        {/* ── Public Routes (no login needed) ── */}
+        <Route path="/"           element={<Login />} />
+        <Route path="/login"      element={<Login />} />
+        <Route path="/signup"     element={<Signup />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+
+        {/* ── Protected Routes (login required) ── */}
+        <Route path="/Dashboard" element={
+          <ProtectedRoute><Dashboard /></ProtectedRoute>
+        } />
+        <Route path="/billing" element={
+          <ProtectedRoute><Billing /></ProtectedRoute>
+        } />
+        <Route path="/accounts" element={
+          <ProtectedRoute><Accounts /></ProtectedRoute>
+        } />
+        <Route path="/AddCustomer" element={
+          <ProtectedRoute><AddCustomer /></ProtectedRoute>
+        } />
+        <Route path="/products" element={
+          <ProtectedRoute><Products /></ProtectedRoute>
+        } />
+        <Route path="/categories" element={
+          <ProtectedRoute><Categories /></ProtectedRoute>
+        } />
+        <Route path="/PaymentHistory/:cid" element={
+          <ProtectedRoute><PaymentHistory /></ProtectedRoute>
+        } />
 
       </Routes>
     </BrowserRouter>

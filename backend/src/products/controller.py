@@ -33,7 +33,7 @@ def create_product(body: createProductSchema, db: Session):
     # Check existing product
     existing = db.query(products).filter(
         products.product_name == body.product_name,
-        products.cid == body.cid
+        products.cid == body.cid, products.is_active == True
     ).first()
 
     if existing:

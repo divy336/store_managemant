@@ -1,45 +1,29 @@
-from fastapi import HTTPException
-from src.categories.dtos import createCategoriesSchema, updateCategoriesSchema
-from src.utils.db import get_db
-from sqlalchemy.orm import Session
 from src.categories.model import categories
+from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
-def create_category(body: createCategoriesSchema, db: Session):
-    existing_category = db.query(categories).filter(categories.cname == body.cname).first()
-    if existing_category:
-        raise HTTPException(400, detail="Category with this name already exists")
+def get_categories(db: Session):
+    return db.query(categories).all()  # ← no is_active filter
 
-    new_category = categories(
+def create_category(body, db: Session):
+    existing = db.query(categories).filter(
+        categories.cname == body.cname
+    ).first()
+    if existing:
+        raise HTTPException(400, detail="Category already exists")
+    new_cat = categories(
         cname=body.cname,
         description=body.description
     )
-    db.add(new_category)
+    db.add(new_cat)
     db.commit()
-    db.refresh(new_category)
+    db.refresh(new_cat)
+    return new_cat
 
-    return {"message": "Category created successfully", "category_id": new_category.cid}
-
-def get_categories(db: Session):
-    categories_list = db.query(categories).all()
-    return categories_list
-
-def update_category(category_id: int, body: updateCategoriesSchema, db: Session):
-    existing_category = db.query(categories).get(category_id)
-    if not existing_category:
+def delete_category(cid: int, db: Session):
+    cat = db.query(categories).filter(categories.cid == cid).first()
+    if not cat:
         raise HTTPException(404, detail="Category not found")
-
-    existing_category.cname = body.cname
-    existing_category.description = body.description
+    db.delete(cat)
     db.commit()
-    db.refresh(existing_category)
-    return existing_category
-
-def delete_category(category_id: int, db: Session):
-    existing_category = db.query(categories).filter(categories.cid == category_id).first()
-    if not existing_category:
-        raise HTTPException(404, detail="Category not found")
-
-    db.delete(existing_category)
-    db.commit()
-
-    return existing_category
+    return {"message": "Category deleted"}

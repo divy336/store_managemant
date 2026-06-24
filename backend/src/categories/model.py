@@ -1,13 +1,14 @@
+
 from src.utils.db import Base
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, func
+from sqlalchemy import Column, String, Integer, TIMESTAMP, func
 
 class categories(Base):
     __tablename__ = "categories"
-    cid = Column(Integer, primary_key=True)
-    cname = Column(String(100))
-    description = Column(Text)
-    created_at = Column(
-        TIMESTAMP(timezone=True), 
-        nullable=False, 
+    cid         = Column(Integer, primary_key=True)
+    cname       = Column(String)
+    description = Column(String)
+    created_at  = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
         server_default=func.now()
     )

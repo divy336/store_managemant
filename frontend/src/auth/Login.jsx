@@ -12,19 +12,17 @@ function Login() {
     e.preventDefault();
 
     try {
-      const response = await api.post("/admin/login_admin", {
-        username,
-        password,
-      });
-
-      localStorage.setItem("token", response.data);
-
-      alert("Login Success");
+      const response = await api.post("/admin/login", {
+  username: username,
+  password: password,
+});
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("admin", JSON.stringify(response.data.admin));
 
       navigate("/Dashboard");
 
-    } catch {
-      alert("Login Failed");
+    } catch (err) {
+      alert(err?.response?.data?.detail || "Login Failed");
     }
   };
 
@@ -71,10 +69,10 @@ function Login() {
 
           <form className="auth-form" onSubmit={loginAdmin}>
             <label>
-              <span>Username</span>
+              <span>UserName</span>
               <input
                 type="text"
-                placeholder="Enter username"
+                placeholder="UserName"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required

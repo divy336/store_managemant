@@ -18,6 +18,6 @@ def send_otp(body: SendOTPSchema, db: Session = Depends(get_db)):
 def verify_otp(body: VerifyOTPSchema, db: Session = Depends(get_db)):
     return controller.verify_otp(body, db)
 
-@admin.post("/login_admin", status_code=status.HTTP_200_OK)
+@admin.post("/login", status_code=status.HTTP_200_OK)
 def login_admin(body: loginSchema, db: Session = Depends(get_db)):
     return controller.admin_login(body, db)

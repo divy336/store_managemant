@@ -182,12 +182,22 @@
 
 .records-table-wrap {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 520px;
 }
 
 .records-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 680px;
+}
+
+.detail-panel {
+  padding: 20px;
+  border-left: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  overflow-y: auto;
+  max-height: 520px;
 }
 
 .records-table th,
