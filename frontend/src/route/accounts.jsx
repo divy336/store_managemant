@@ -19,14 +19,25 @@ function Accounts() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ cname: "", cphone: "", cmail: "" });
   const [addLoading, setAddLoading] = useState(false);
+  const [filterType, setFilterType] = useState("default");
 
   useEffect(() => { loadCustomers(); }, []);
 
-  async function loadCustomers() {
+  async function loadCustomers(type = filterType) {
     try {
       setLoading(true);
-      const res = await api.get("/customer/get_all_customer");
-      setCustomers((res.data || []).filter(c => c.cname !== "Cash Customer"));
+      if (type === "monthly") {
+        const res = await api.get("/customer/get_monthly_customers");
+        setCustomers(res.data || []);
+      } else {
+        const res = await api.get("/customer/get_all_customer");
+        if (type === "cash") {
+          setCustomers((res.data || []).filter(c => c.cname === "Cash Customer"));
+        } else {
+          // default: keep previous behaviour (hide Cash Customer)
+          setCustomers((res.data || []).filter(c => c.cname !== "Cash Customer"));
+        }
+      }
     } catch {
       setNotice("Failed to load customers");
     } finally { setLoading(false); }
@@ -403,11 +414,29 @@ const handleMonthlyWhatsApp = (key, monthData) => {
         }}>
           <div style={{
             display: "flex", justifyContent: "space-between",
-            alignItems: "center", marginBottom: "16px"
+            alignItems: "center", marginBottom: "16px", gap: "12px"
           }}>
-            <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#1e3a5f", margin: 0 }}>
-              Customer Accounts
-            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#1e3a5f", margin: 0 }}>
+                Customer Accounts
+              </h2>
+              <div style={{ display: "flex", gap: "8px" }}>
+                {[
+                  { key: 'default', label: 'All' },
+                  { key: 'monthly', label: 'Monthly' },
+                  { key: 'cash', label: 'Cash Customer' }
+                ].map(b => (
+                  <button key={b.key} onClick={() => { setFilterType(b.key); loadCustomers(b.key); }}
+                    style={{
+                      padding: "6px 10px", borderRadius: "8px",
+                      border: filterType === b.key ? 'none' : '1px solid #e2e8f0',
+                      backgroundColor: filterType === b.key ? '#1e3a5f' : '#f8fafc',
+                      color: filterType === b.key ? 'white' : '#1e3a5f',
+                      fontWeight: 700, cursor: 'pointer', fontSize: '12px'
+                    }}>{b.label}</button>
+                ))}
+              </div>
+            </div>
             <input
               type="text"
               placeholder="Search name, phone, email"
@@ -554,17 +583,19 @@ const handleMonthlyWhatsApp = (key, monthData) => {
 
                 {/* Bill History */}
                 <h3 style={{ fontSize: "15px", fontWeight: "700", color: "#1e3a5f", marginBottom: "14px" }}>
-                  Bill History ({customerDetail.CustomerBills?.filter(b => b.payment_type === "Monthly Account").length || 0} bills)
+                  Bill History ({(customerDetail.CustomerBills || []).filter(b => b.payment_type === (customerDetail.Customer.cname === "Cash Customer" ? "Cash" : "Monthly Account")).length || 0} bills)
                 </h3>
 
                 {(() => {
-                  const monthlyBills = customerDetail.CustomerBills?.filter(
-                    b => b.payment_type === "Monthly Account"
-                  ) || [];
+                  const isCashCustomer = customerDetail.Customer.cname === "Cash Customer";
+                  const billType = isCashCustomer ? "Cash" : "Monthly Account";
+                  const monthlyBills = (customerDetail.CustomerBills || []).filter(
+                    b => b.payment_type === billType
+                  );
 
                   if (monthlyBills.length === 0) return (
                     <p style={{ color: "#94a3b8", textAlign: "center", padding: "20px" }}>
-                      No monthly account bills found.
+                      {isCashCustomer ? "No cash bills found." : "No monthly account bills found."}
                     </p>
                   );
 
@@ -690,11 +721,13 @@ const handleMonthlyWhatsApp = (key, monthData) => {
                               borderRadius: "6px", padding: "6px 12px",
                               cursor: "pointer", fontSize: "12px", fontWeight: "700"
                             }}>⬇ PDF {label}</button>
-                            <button onClick={() => handleDeleteMonth(key, label)} style={{
-                              backgroundColor: "#7f1d1d", color: "white", border: "none",
-                              borderRadius: "6px", padding: "6px 12px",
-                              cursor: "pointer", fontSize: "12px", fontWeight: "700"
-                            }}>🗑 Delete {label}</button>
+                            {!isCashCustomer && (
+                              <button onClick={() => handleDeleteMonth(key, label)} style={{
+                                backgroundColor: "#7f1d1d", color: "white", border: "none",
+                                borderRadius: "6px", padding: "6px 12px",
+                                cursor: "pointer", fontSize: "12px", fontWeight: "700"
+                              }}>🗑 Delete {label}</button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -702,7 +735,7 @@ const handleMonthlyWhatsApp = (key, monthData) => {
                   });
                 })()}
 
-                <button onClick={() => navigate("/PaymentHistory")}
+                <button onClick={() => navigate(`/PaymentHistory/${selectedCid}`)}
  style={{
                   marginTop: "8px", marginLeft: "8px", padding: "8px 18px",
                   backgroundColor: "#1e3a5f", color: "white",

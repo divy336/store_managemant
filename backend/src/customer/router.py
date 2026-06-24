@@ -24,6 +24,11 @@ def create_customer(body: createCustomerSchema, db: Session = Depends(get_db), _
 def get_all_customer(db: Session = Depends(get_db), _: any = Depends(get_current_admin)):
     return controller.get_all_customer(db)
 
+
+@customer_route.get("/get_monthly_customers")
+def get_monthly_customers(db: Session = Depends(get_db), _: any = Depends(get_current_admin)):
+    return controller.get_monthly_customers(db)
+
 @customer_route.get("/get_customer/{cid}")
 def get_customer(cid: int, db: Session = Depends(get_db), _: any = Depends(get_current_admin)):
     return controller.get_customer(cid, db)

@@ -36,7 +36,7 @@ async def upload_product_image(pid: int, file: UploadFile = File(...), db: Sessi
     return await controller.upload_product_image(pid, file, db)
 
 @products_route.get("/image/{pid}")
-def get_product_image(pid: int, db: Session = Depends(get_db), _: any = Depends(get_current_admin)):
+def get_product_image(pid: int, db: Session = Depends(get_db)):
     return controller.get_product_image(pid, db)
 
 @products_route.delete("/delete_image/{pid}", response_model=imageActionResponseSchema, status_code=status.HTTP_200_OK)

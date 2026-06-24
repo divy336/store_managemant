@@ -142,7 +142,8 @@ def admin_login(body: loginSchema, db: Session):
             400,
             detail="No user found with given username"
         )
-
+    print(f"DEBUG - Plain text entered: {body.password}")
+    print(f"DEBUG - Hash from database: {owner.password}") 
     if not verify_password(
         body.password,
         owner.password

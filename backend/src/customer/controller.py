@@ -6,7 +6,7 @@ from src.bill.model import bill, bill_items
 from src.products.model import products
 
 def createCustomer(body: createCustomerSchema, db: Session):
-    existing_customer = db.query(customer).filter(customer.cphone == str(body.cphone)).first()
+    existing_customer = db.query(customer).filter(customer.cphone == str(body.cphone), customer.cname != "Cash Customer").first()
     if existing_customer:
         raise HTTPException(400, detail="Customer is already existing")
     new_Customer = customer(
@@ -24,6 +24,18 @@ def createCustomer(body: createCustomerSchema, db: Session):
 def get_all_customer(db: Session):
     customers = db.query(customer).all()
     return customers
+
+
+def get_monthly_customers(db: Session):
+    # return customers who have at least one bill with payment_type 'Monthly Account'
+    monthly_customers = (
+        db.query(customer)
+        .join(bill, bill.cid == customer.cid)
+        .filter(bill.payment_type == "Monthly Account")
+        .distinct()
+        .all()
+    )
+    return monthly_customers
 
 def get_customer(cid: int, db: Session):
     bill_value = db.query(bill).filter(bill.cid == cid).all()
