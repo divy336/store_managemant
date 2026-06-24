@@ -8,10 +8,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import random
 import requests
-import axios from "axios";
-
 from src.utils.auth import hash_password, verify_password, create_access_token
-
 
 def admin_registar(body: RegisterSchema, db: Session):
 
