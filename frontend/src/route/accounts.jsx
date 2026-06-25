@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/api";
 import Header from "../components/Hader";
 import Footer from "../components/Footer";
+import "../style/accounts.css";
+
 
 function Accounts() {
   const navigate = useNavigate();
@@ -407,94 +409,111 @@ const handleMonthlyWhatsApp = (key, monthData) => {
         )}
 
         {/* Customer List */}
-        <div style={{
-          backgroundColor: "white", borderRadius: "12px",
-          padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-          marginBottom: "24px"
-        }}>
-          <div style={{
-            display: "flex", justifyContent: "space-between",
-            alignItems: "center", marginBottom: "16px", gap: "12px"
-          }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#1e3a5f", margin: 0 }}>
-                Customer Accounts
-              </h2>
-              <div style={{ display: "flex", gap: "8px" }}>
-                {[
-                  { key: 'default', label: 'All' },
-                  { key: 'monthly', label: 'Monthly' },
-                  { key: 'cash', label: 'Cash Customer' }
-                ].map(b => (
-                  <button key={b.key} onClick={() => { setFilterType(b.key); loadCustomers(b.key); }}
-                    style={{
-                      padding: "6px 10px", borderRadius: "8px",
-                      border: filterType === b.key ? 'none' : '1px solid #e2e8f0',
-                      backgroundColor: filterType === b.key ? '#1e3a5f' : '#f8fafc',
-                      color: filterType === b.key ? 'white' : '#1e3a5f',
-                      fontWeight: 700, cursor: 'pointer', fontSize: '12px'
-                    }}>{b.label}</button>
-                ))}
-              </div>
-            </div>
-            <input
-              type="text"
-              placeholder="Search name, phone, email"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                padding: "8px 14px", border: "1px solid #e2e8f0",
-                borderRadius: "8px", fontSize: "13px", width: "240px",
-                outline: "none"
-              }}
-            />
-          </div>
+{/* Customer List */}
+<div style={{
+  backgroundColor: "white", borderRadius: "12px",
+  padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+  marginBottom: "24px"
+}}>
+  <div style={{
+    display: "flex", justifyContent: "space-between",
+    alignItems: "center", marginBottom: "16px", gap: "12px",
+    flexWrap: "wrap"
+  }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#1e3a5f", margin: 0 }}>
+        Customer Accounts
+      </h2>
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        {[
+          { key: 'default', label: 'All' },
+          { key: 'monthly', label: 'Monthly' },
+          { key: 'cash', label: 'Cash Customer' }
+        ].map(b => (
+          <button key={b.key} onClick={() => { setFilterType(b.key); loadCustomers(b.key); }}
+            style={{
+              padding: "6px 10px", borderRadius: "8px",
+              border: filterType === b.key ? 'none' : '1px solid #e2e8f0',
+              backgroundColor: filterType === b.key ? '#1e3a5f' : '#f8fafc',
+              color: filterType === b.key ? 'white' : '#1e3a5f',
+              fontWeight: 700, cursor: 'pointer', fontSize: '12px'
+            }}>{b.label}</button>
+        ))}
+      </div>
+    </div>
+    <input
+      type="text"
+      placeholder="Search name, phone, email"
+      value={search}
+      onChange={e => setSearch(e.target.value)}
+      style={{
+        padding: "8px 14px", border: "1px solid #e2e8f0",
+        borderRadius: "8px", fontSize: "13px",
+        width: "100%", maxWidth: "240px",
+        outline: "none", boxSizing: "border-box"
+      }}
+    />
+  </div>
 
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #f1f5f9" }}>
-                {["NAME", "PHONE", "EMAIL", "DUE", "LAST PAID", "ACTION"].map(h => (
-                  <th key={h} style={{
-                    padding: "10px 12px", textAlign: "left",
-                    fontSize: "11px", color: "#64748b",
-                    fontWeight: "700", letterSpacing: "0.5px"
-                  }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(c => (
-                <tr key={c.cid} style={{ borderBottom: "1px solid #f8fafc" }}>
-                  <td style={{ padding: "14px 12px", fontWeight: "700", color: "#1e293b" }}>
-                    {c.cname}
-                  </td>
-                  <td style={{ padding: "14px 12px", color: "#475569" }}>{c.cphone}</td>
-                  <td style={{ padding: "14px 12px", color: "#475569" }}>{c.cmail || "-"}</td>
-                  <td style={{ padding: "14px 12px" }}>
-                    <span style={{
-                      color: c.currently_due_amount > 0 ? "#dc2626" : "#15803d",
-                      fontWeight: "700"
-                    }}>
-                      Rs {parseFloat(c.currently_due_amount || 0).toFixed(2)}
-                    </span>
-                  </td>
-                  <td style={{ padding: "14px 12px", color: "#475569" }}>
-                    Rs {parseFloat(c.last_paid_amount || 0).toFixed(2)}
-                  </td>
-                  <td style={{ padding: "14px 12px" }}>
-                    <button onClick={() => openCustomer(c.cid)} style={{
-                      backgroundColor: "#1e3a5f", color: "white",
-                      border: "none", borderRadius: "6px",
-                      padding: "6px 14px", cursor: "pointer",
-                      fontSize: "12px", fontWeight: "700"
-                    }}>👁 View</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+  {/* ── Scrollable table wrapper ── */}
+  <div style={{
+    overflowX: "auto",
+    WebkitOverflowScrolling: "touch",
+    scrollbarWidth: "thin",
+    scrollbarColor: "#cbd5e1 transparent"
+  }}>
+    <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "600px" }}>
+      <thead>
+        <tr style={{ borderBottom: "2px solid #f1f5f9" }}>
+          {["NAME", "PHONE", "EMAIL", "DUE", "LAST PAID", "ACTION"].map(h => (
+            <th key={h} style={{
+              padding: "10px 12px", textAlign: "left",
+              fontSize: "11px", color: "#64748b",
+              fontWeight: "700", letterSpacing: "0.5px",
+              whiteSpace: "nowrap"
+            }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {filtered.map(c => (
+          <tr key={c.cid} style={{ borderBottom: "1px solid #f8fafc" }}>
+            <td style={{ padding: "14px 12px", fontWeight: "700", color: "#1e293b" }}>
+              {c.cname}
+            </td>
+            <td style={{ padding: "14px 12px", color: "#475569", whiteSpace: "nowrap" }}>
+              {c.cphone}
+            </td>
+            <td style={{ padding: "14px 12px", color: "#475569" }}>
+              {c.cmail || "-"}
+            </td>
+            <td style={{ padding: "14px 12px", whiteSpace: "nowrap" }}>
+              <span style={{
+                color: c.currently_due_amount > 0 ? "#dc2626" : "#15803d",
+                fontWeight: "700"
+              }}>
+                Rs {parseFloat(c.currently_due_amount || 0).toFixed(2)}
+              </span>
+            </td>
+            <td style={{ padding: "14px 12px", color: "#475569", whiteSpace: "nowrap" }}>
+              Rs {parseFloat(c.last_paid_amount || 0).toFixed(2)}
+            </td>
+            <td style={{ padding: "14px 12px" }}>
+              <button onClick={() => openCustomer(c.cid)} style={{
+                backgroundColor: "#1e3a5f", color: "white",
+                border: "none", borderRadius: "6px",
+                padding: "6px 14px", cursor: "pointer",
+                fontSize: "12px", fontWeight: "700",
+                whiteSpace: "nowrap"
+              }}>👁 View</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>{/* ← close scroll wrapper */}
 
+</div>{/* ← close Customer List card */}
         {/* Customer Detail Panel */}
         {selectedCid && (
           <div style={{
