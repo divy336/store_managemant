@@ -1,5 +1,4 @@
 name: Daily Backup to Google Drive
-
 on:
   schedule:
     - cron: '0 0 * * *'
@@ -8,7 +7,6 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -31,6 +29,20 @@ jobs:
           root_folder_id = ${{ secrets.GDRIVE_FOLDER_ID }}
           EOF
 
+      # ✅ Dump PostgreSQL from Railway
+      - name: Dump PostgreSQL Database
+        run: |
+          export PGPASSWORD="${{ secrets.RAILWAY_DB_PASS }}"
+          pg_dump \
+            -h ${{ secrets.RAILWAY_DB_HOST }} \
+            -p ${{ secrets.RAILWAY_DB_PORT }} \
+            -U ${{ secrets.RAILWAY_DB_USER }} \
+            -d ${{ secrets.RAILWAY_DB_NAME }} \
+            --format=plain \
+            --no-password \
+            > database_backup.sql
+          echo "✅ Database dump size: $(du -sh database_backup.sql)"
+
       - name: Create ZIP with date
         run: |
           DATE=$(date +%Y-%m-%d)
@@ -40,9 +52,7 @@ jobs:
           echo "BACKUP_FILE=store_managemant_backup_${DATE}.zip" >> $GITHUB_ENV
 
       - name: Upload to Google Drive
-        run: rclone copy "$BACKUP_FILE" gdrive:/
-        env:
-          BACKUP_FILE: ${{ env.BACKUP_FILE }}
+        run: rclone copy "${{ env.BACKUP_FILE }}" gdrive:/
 
       - name: Delete backups older than 30 days
         run: |
@@ -50,7 +60,7 @@ jobs:
             rclone delete "gdrive:/$file"
             echo "Deleted: $file"
           done
-        
+
       - name: Show backup count
         run: |
           COUNT=$(rclone ls gdrive:/ | grep "store_managemant_backup" | wc -l)
