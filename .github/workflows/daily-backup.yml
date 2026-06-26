@@ -24,16 +24,15 @@ jobs:
       - name: Configure rclone
         run: |
           mkdir -p ~/.config/rclone
+          # Write credentials to a file first
+          echo '${{ secrets.GDRIVE_CREDENTIALS }}' > /tmp/sa_credentials.json
           cat > ~/.config/rclone/rclone.conf << EOF
           [gdrive]
           type = drive
           scope = drive
-          service_account_credentials = $GDRIVE_CREDENTIALS
-          root_folder_id = $GDRIVE_FOLDER_ID
+          service_account_file = /tmp/sa_credentials.json
+          root_folder_id = ${{ secrets.GDRIVE_FOLDER_ID }}
           EOF
-        env:
-          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
-          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
 
       - name: Create ZIP with date
         run: |
@@ -55,7 +54,9 @@ jobs:
           from google.oauth2 import service_account
           from googleapiclient.discovery import build
 
-          creds_info = json.loads(os.environ['GDRIVE_CREDENTIALS'])
+          with open('/tmp/sa_credentials.json') as f:
+              creds_info = json.load(f)
+
           creds = service_account.Credentials.from_service_account_info(
               creds_info,
               scopes=['https://www.googleapis.com/auth/drive']
@@ -77,11 +78,13 @@ jobs:
           if len(files) > 30:
               to_delete = files[:len(files) - 30]
               for f in to_delete:
-                  service.files().delete(fileId=f['id']).execute()
+                  service.files().delete(
+                      fileId=f['id'],
+                      supportsAllDrives=True
+                  ).execute()
                   print(f"Deleted: {f['name']}")
           else:
               print("No cleanup needed")
           EOF
         env:
-          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
