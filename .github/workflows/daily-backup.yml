@@ -15,6 +15,35 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dependencies
+        run: pip install google-api-python-client google-auth --break-system-packages
+
+      - name: Test Drive connection
+        run: |
+          python3 << 'EOF'
+          import os, json
+          from google.oauth2 import service_account
+          from googleapiclient.discovery import build
+
+          creds_info = json.loads(os.environ['GDRIVE_CREDENTIALS'])
+          creds = service_account.Credentials.from_service_account_info(
+              creds_info,
+              scopes=['https://www.googleapis.com/auth/drive']
+          )
+          service = build('drive', 'v3', credentials=creds)
+          folder_id = os.environ['GDRIVE_FOLDER_ID']
+
+          # Test: get folder details
+          folder = service.files().get(
+              fileId=folder_id,
+              fields='id, name'
+          ).execute()
+          print(f"Folder found: {folder.get('name')} - {folder.get('id')}")
+          EOF
+        env:
+          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+
       - name: Create ZIP with date
         run: |
           DATE=$(date +%Y-%m-%d)
@@ -25,15 +54,13 @@ jobs:
 
       - name: Upload to Google Drive
         run: |
-          pip install google-api-python-client google-auth --break-system-packages
           python3 << 'EOF'
           import os, json
           from google.oauth2 import service_account
           from googleapiclient.discovery import build
           from googleapiclient.http import MediaFileUpload
 
-          creds_json = os.environ['GDRIVE_CREDENTIALS']
-          creds_info = json.loads(creds_json)
+          creds_info = json.loads(os.environ['GDRIVE_CREDENTIALS'])
           creds = service_account.Credentials.from_service_account_info(
               creds_info,
               scopes=['https://www.googleapis.com/auth/drive']
@@ -53,7 +80,7 @@ jobs:
               media_body=media,
               fields='id, name'
           ).execute()
-          print(f"Uploaded: {file.get('name')} with ID: {file.get('id')}")
+          print(f"Uploaded: {file.get('name')}")
           EOF
         env:
           GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
@@ -67,8 +94,7 @@ jobs:
           from google.oauth2 import service_account
           from googleapiclient.discovery import build
 
-          creds_json = os.environ['GDRIVE_CREDENTIALS']
-          creds_info = json.loads(creds_json)
+          creds_info = json.loads(os.environ['GDRIVE_CREDENTIALS'])
           creds = service_account.Credentials.from_service_account_info(
               creds_info,
               scopes=['https://www.googleapis.com/auth/drive']
