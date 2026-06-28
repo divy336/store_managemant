@@ -18,8 +18,12 @@ def admin_registar(body: RegisterSchema, db: Session):
 
     otp_code = str(random.randint(100000, 999999))
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    # ✅ Always use SENDER_EMAIL from ENV, not body.email
+    owner_email = settings.SENDER_EMAIL
+
     new_otp = OTPVerification(
-        email=body.email,
+        email=owner_email,
         otp_code=otp_code,
         expires_at=expires_at,
         is_used=False
@@ -27,13 +31,14 @@ def admin_registar(body: RegisterSchema, db: Session):
     db.add(new_otp)
     db.commit()
 
-    send_otp_email_via_brevo(body.email, otp_code, body.username)
+    # ✅ OTP always goes to owner ENV email
+    send_otp_email_via_brevo(owner_email, otp_code, body.username)
 
     hashed_pw = hash_password(body.password)
 
     new_admin = admin(
         username=body.username,
-        email=body.email,
+        email=owner_email,   # ✅ save ENV email in DB too
         password=hashed_pw,
         is_verified=False
     )
@@ -41,23 +46,23 @@ def admin_registar(body: RegisterSchema, db: Session):
     db.commit()
     db.refresh(new_admin)
 
-    return {"message": "Registered successfully. OTP sent to your email. Please verify."}
+    return {"message": "Registered successfully. OTP sent to owner email. Please verify."}
 
 
 def send_otp(body: SendOTPSchema, db: Session):
-    # ✅ SECURITY FIX: Always get the ONE owner from database
     owner = db.query(admin).first()
 
-    # ✅ Never tell anyone if account exists or not (security)
     if not owner:
         raise HTTPException(404, detail="No admin account found")
 
     otp_code = str(random.randint(100000, 999999))
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
 
-    # ✅ Always save OTP against OWNER's email from DB, not user input
+    # ✅ Always use SENDER_EMAIL from ENV
+    owner_email = settings.SENDER_EMAIL
+
     new_otp = OTPVerification(
-        email=owner.email,
+        email=owner_email,
         otp_code=otp_code,
         expires_at=expires_at,
         is_used=False
@@ -65,10 +70,9 @@ def send_otp(body: SendOTPSchema, db: Session):
     db.add(new_otp)
     db.commit()
 
-    # ✅ Always send OTP to OWNER's email from DB, not user input
-    send_otp_email_via_brevo(owner.email, otp_code, owner.username)
+    # ✅ OTP always goes to ENV email no matter what anyone types
+    send_otp_email_via_brevo(owner_email, otp_code, owner.username)
 
-    # ✅ Don't reveal which email OTP was sent to
     return {"message": "OTP sent to registered email. Valid for 10 minutes."}
 
 
@@ -82,9 +86,9 @@ def send_otp_email_via_brevo(email: str, otp_code: str, username: str):
     payload = {
         "sender": {
             "name": settings.SHOP_NAME,
-            "email": settings.SENDER_EMAIL
+            "email": settings.SENDER_EMAIL   # FROM = ENV email
         },
-        "to": [{"email": email, "name": username}],
+        "to": [{"email": email, "name": username}],  # TO = ENV email
         "subject": "Your OTP for Smart Shop Login",
         "htmlContent": f"""
             <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;">
@@ -107,15 +111,13 @@ def send_otp_email_via_brevo(email: str, otp_code: str, username: str):
 def verify_otp(body: VerifyOTPSchema, db: Session):
     now = datetime.now(timezone.utc)
 
-    # ✅ Always verify against OWNER's email from DB
-    owner = db.query(admin).first()
-    if not owner:
-        raise HTTPException(400, detail="No admin account found")
+    # ✅ Always use ENV email, not body.email
+    owner_email = settings.SENDER_EMAIL
 
     otp_record = (
         db.query(OTPVerification)
         .filter(
-            OTPVerification.email == owner.email,  # ✅ owner.email not body.email
+            OTPVerification.email == owner_email,
             OTPVerification.is_used == False
         )
         .order_by(OTPVerification.created_at.desc())
@@ -132,7 +134,11 @@ def verify_otp(body: VerifyOTPSchema, db: Session):
         raise HTTPException(400, detail="Wrong OTP. Please try again.")
 
     otp_record.is_used = True
-    owner.is_verified = True
+
+    owner = db.query(admin).first()
+    if owner:
+        owner.is_verified = True
+
     db.commit()
 
     return {"message": "Email verified successfully. You can now login."}
